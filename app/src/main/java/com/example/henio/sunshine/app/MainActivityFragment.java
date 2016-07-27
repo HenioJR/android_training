@@ -5,6 +5,8 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 
 import java.util.ArrayList;
 
@@ -28,6 +30,14 @@ public class MainActivityFragment extends Fragment {
         mock.add("Thurs - Rainy - 64/51");
         mock.add("Fri - Foggy - 70/47");
         mock.add("Sat - Sunny - 76/68");
+
+        // adapter has four parameters: context, ID of list item layout, ID of text view to populate and list of data
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(), R.layout.list_item_forecast, R.id.list_item_forecast_textview, mock);
+
+        //ListView v = (ListView) getActivity().findViewById(R.id.listview_forecast);
+        // we should use rootView instead of getActivity, pois rootView is closer to the listview_forecast than getActivity. It's about performance!
+        ListView listView = (ListView) rootView.findViewById(R.id.listview_forecast);
+        listView.setAdapter(adapter);
 
         return rootView;
     }
