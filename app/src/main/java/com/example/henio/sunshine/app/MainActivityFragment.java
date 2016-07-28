@@ -1,11 +1,21 @@
 package com.example.henio.sunshine.app;
 
+import android.os.AsyncTask;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 
 /**
@@ -29,6 +39,79 @@ public class MainActivityFragment extends Fragment {
         mock.add("Fri - Foggy - 70/47");
         mock.add("Sat - Sunny - 76/68");
 
+        // adapter has four parameters: context, ID of list item layout, ID of text view to populate and list of data
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(), R.layout.list_item_forecast, R.id.list_item_forecast_textview, mock);
+
+        new FetchWeatherTask().execute("http://api.openweathermap.org/data/2.5/forecast/daily?q=Florianopolis&cnt=7&units=metric&mode=json&APPID=f7997ac3706e55961842a709a0e77c41");
+
+        //ListView v = (ListView) getActivity().findViewById(R.id.listview_forecast);
+        // we should use rootView instead of getActivity, pois rootView is closer to the listview_forecast than getActivity. It's about performance!
+        ListView listView = (ListView) rootView.findViewById(R.id.listview_forecast);
+        listView.setAdapter(adapter);
+
         return rootView;
+    }
+
+    public class FetchWeatherTask extends AsyncTask<String, String, String>{
+
+        private final String LOG_TAG = FetchWeatherTask.class.getSimpleName();
+
+        @Override
+        protected String doInBackground(String... params) {
+            return this.httpConnection(params[0]);
+        }
+
+        private String httpConnection(String urlStr){
+            // these two need to be closed after
+            HttpURLConnection urlConnection = null;
+            BufferedReader reader = null;
+
+            try {
+                URL url = new URL(urlStr);
+
+                //openning connection
+                urlConnection = (HttpURLConnection) url.openConnection();
+                urlConnection.setRequestMethod("GET");
+                urlConnection.connect();
+
+                //read the answer
+                InputStream inputStream = urlConnection.getInputStream();
+                StringBuffer buffer = new StringBuffer();
+                //return null if server return nothing
+                if(inputStream == null) {
+                    return null;
+                }
+
+                reader = new BufferedReader(new InputStreamReader(inputStream));
+                String line;
+                while ((line = reader.readLine()) != null){
+                    buffer.append(line + "\n");
+                }
+                //return null if server returned an empty response
+                if(buffer.length() == 0){
+                    return null;
+                }
+
+                //if everything ok, return json
+                return buffer.toString();
+
+            } catch (IOException e){
+                Log.e(LOG_TAG, "Error", e);
+                return null;
+
+            } finally {
+                if(urlConnection != null){
+                    urlConnection.disconnect();
+                }
+
+                if(reader != null){
+                    try {
+                        reader.close();
+                    } catch (IOException e) {
+                        Log.e(LOG_TAG, "Error on close BufferedReader", e);
+                    }
+                }
+            }
+        }
     }
 }
