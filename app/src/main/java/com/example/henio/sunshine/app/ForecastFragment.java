@@ -1,5 +1,6 @@
 package com.example.henio.sunshine.app;
 
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -50,7 +51,7 @@ public class ForecastFragment extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         Log.v(LOG_TAG, "item refresh clicked");
         if(item.getItemId() == R.id.action_refresh){
-            new FetchWeatherTask().execute("http://api.openweathermap.org/data/2.5/forecast/daily?q=Florianopolis&cnt=7&units=metric&mode=json&APPID=f7997ac3706e55961842a709a0e77c41");
+            new FetchWeatherTask().execute("Florianopolis");
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -80,22 +81,42 @@ public class ForecastFragment extends Fragment {
         return rootView;
     }
 
-    public class FetchWeatherTask extends AsyncTask<String, String, String>{
+    public class FetchWeatherTask extends AsyncTask<String, Void, Void>{
 
         private final String LOG_TAG = FetchWeatherTask.class.getSimpleName();
 
         @Override
-        protected String doInBackground(String... params) {
+        protected Void doInBackground(String... params) {
+            if(params.length == 0){
+                return null;
+            }
             return this.httpConnection(params[0]);
         }
 
-        private String httpConnection(String urlStr){
+        private Void httpConnection(String cityName){
             // these two need to be closed after
             HttpURLConnection urlConnection = null;
             BufferedReader reader = null;
 
             try {
-                URL url = new URL(urlStr);
+                final String FORECAST_BASE_URL = "http://api.openweathermap.org/data/2.5/forecast/daily?";
+                final String QUERY_PARAM = "q";
+                final String FORMAT_PARAM = "mode";
+                final String UNITS_PARAM = "units";
+                final String DAYS_PARAM = "cnt";
+                final String APPID_PARAM = "APPID";
+
+                Uri builtUri = Uri.parse(FORECAST_BASE_URL).buildUpon()
+                        .appendQueryParameter(QUERY_PARAM, cityName)
+                        .appendQueryParameter(FORMAT_PARAM, "json")
+                        .appendQueryParameter(UNITS_PARAM, "metric")
+                        .appendQueryParameter(DAYS_PARAM, "7")
+                        .appendQueryParameter(APPID_PARAM, BuildConfig.OPEN_WEATHER_MAP_APPID_KEY)
+                        .build();
+
+                URL url = new URL(builtUri.toString());
+
+                Log.v(LOG_TAG, "Url = " + url);
 
                 //openning connection
                 urlConnection = (HttpURLConnection) url.openConnection();
@@ -121,7 +142,7 @@ public class ForecastFragment extends Fragment {
                 }
 
                 //if everything ok, return json
-                return buffer.toString();
+                String jsonResponse = buffer.toString();
 
             } catch (IOException e){
                 Log.e(LOG_TAG, "Error", e);
@@ -139,6 +160,7 @@ public class ForecastFragment extends Fragment {
                         Log.e(LOG_TAG, "Error on close BufferedReader", e);
                     }
                 }
+                return null;
             }
         }
     }
