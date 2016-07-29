@@ -1,10 +1,14 @@
 package com.example.henio.sunshine.app;
 
 import android.os.AsyncTask;
-import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -21,9 +25,35 @@ import java.util.ArrayList;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class MainActivityFragment extends Fragment {
+public class ForecastFragment extends Fragment {
 
-    public MainActivityFragment() {
+    private final String LOG_TAG = ForecastFragment.class.getSimpleName();
+
+    public ForecastFragment() {
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        //called to indicate that the fragment would like to add items to the Options Menu.
+        //otherwise, the fragment will not receive a call to onCreateOptionsMenu()
+        this.setHasOptionsMenu(true);
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.forecastfragment, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        Log.v(LOG_TAG, "item refresh clicked");
+        if(item.getItemId() == R.id.action_refresh){
+            new FetchWeatherTask().execute("http://api.openweathermap.org/data/2.5/forecast/daily?q=Florianopolis&cnt=7&units=metric&mode=json&APPID=f7997ac3706e55961842a709a0e77c41");
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -41,8 +71,6 @@ public class MainActivityFragment extends Fragment {
 
         // adapter has four parameters: context, ID of list item layout, ID of text view to populate and list of data
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(), R.layout.list_item_forecast, R.id.list_item_forecast_textview, mock);
-
-        new FetchWeatherTask().execute("http://api.openweathermap.org/data/2.5/forecast/daily?q=Florianopolis&cnt=7&units=metric&mode=json&APPID=f7997ac3706e55961842a709a0e77c41");
 
         //ListView v = (ListView) getActivity().findViewById(R.id.listview_forecast);
         // we should use rootView instead of getActivity, pois rootView is closer to the listview_forecast than getActivity. It's about performance!
