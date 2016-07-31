@@ -58,7 +58,6 @@ public class ForecastFragment extends Fragment {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        Log.v(LOG_TAG, "item refresh clicked");
         if(item.getItemId() == R.id.action_refresh){
             new FetchWeatherTask().execute("Florianopolis");
             return true;
@@ -155,8 +154,6 @@ public class ForecastFragment extends Fragment {
 
                 //if everything ok, return json
                 jsonResponse = buffer.toString();
-
-                Log.v(LOG_TAG, "Json Response = " + jsonResponse);
 
             } catch (IOException e){
                 Log.e(LOG_TAG, "Error", e);
@@ -287,9 +284,6 @@ public class ForecastFragment extends Fragment {
                 resultStrs[i] = day + " - " + description + " - " + highAndLow;
             }
 
-            for (String s : resultStrs) {
-                Log.v(LOG_TAG, "Forecast entry: " + s);
-            }
             return resultStrs;
 
         }
