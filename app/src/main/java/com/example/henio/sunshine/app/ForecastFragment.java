@@ -1,10 +1,15 @@
 package com.example.henio.sunshine.app;
 
+import android.net.Uri;
 import android.os.AsyncTask;
-import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -21,9 +26,35 @@ import java.util.ArrayList;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class MainActivityFragment extends Fragment {
+public class ForecastFragment extends Fragment {
 
-    public MainActivityFragment() {
+    private final String LOG_TAG = ForecastFragment.class.getSimpleName();
+
+    public ForecastFragment() {
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        //called to indicate that the fragment would like to add items to the Options Menu.
+        //otherwise, the fragment will not receive a call to onCreateOptionsMenu()
+        this.setHasOptionsMenu(true);
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.forecastfragment, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        Log.v(LOG_TAG, "item refresh clicked");
+        if(item.getItemId() == R.id.action_refresh){
+            new FetchWeatherTask().execute("Florianopolis");
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -42,8 +73,6 @@ public class MainActivityFragment extends Fragment {
         // adapter has four parameters: context, ID of list item layout, ID of text view to populate and list of data
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(), R.layout.list_item_forecast, R.id.list_item_forecast_textview, mock);
 
-        new FetchWeatherTask().execute("http://api.openweathermap.org/data/2.5/forecast/daily?q=Florianopolis&cnt=7&units=metric&mode=json&APPID=f7997ac3706e55961842a709a0e77c41");
-
         //ListView v = (ListView) getActivity().findViewById(R.id.listview_forecast);
         // we should use rootView instead of getActivity, pois rootView is closer to the listview_forecast than getActivity. It's about performance!
         ListView listView = (ListView) rootView.findViewById(R.id.listview_forecast);
@@ -52,22 +81,42 @@ public class MainActivityFragment extends Fragment {
         return rootView;
     }
 
-    public class FetchWeatherTask extends AsyncTask<String, String, String>{
+    public class FetchWeatherTask extends AsyncTask<String, Void, Void>{
 
         private final String LOG_TAG = FetchWeatherTask.class.getSimpleName();
 
         @Override
-        protected String doInBackground(String... params) {
+        protected Void doInBackground(String... params) {
+            if(params.length == 0){
+                return null;
+            }
             return this.httpConnection(params[0]);
         }
 
-        private String httpConnection(String urlStr){
+        private Void httpConnection(String cityName){
             // these two need to be closed after
             HttpURLConnection urlConnection = null;
             BufferedReader reader = null;
 
             try {
-                URL url = new URL(urlStr);
+                final String FORECAST_BASE_URL = "http://api.openweathermap.org/data/2.5/forecast/daily?";
+                final String QUERY_PARAM = "q";
+                final String FORMAT_PARAM = "mode";
+                final String UNITS_PARAM = "units";
+                final String DAYS_PARAM = "cnt";
+                final String APPID_PARAM = "APPID";
+
+                Uri builtUri = Uri.parse(FORECAST_BASE_URL).buildUpon()
+                        .appendQueryParameter(QUERY_PARAM, cityName)
+                        .appendQueryParameter(FORMAT_PARAM, "json")
+                        .appendQueryParameter(UNITS_PARAM, "metric")
+                        .appendQueryParameter(DAYS_PARAM, "7")
+                        .appendQueryParameter(APPID_PARAM, BuildConfig.OPEN_WEATHER_MAP_APPID_KEY)
+                        .build();
+
+                URL url = new URL(builtUri.toString());
+
+                Log.v(LOG_TAG, "Url = " + url);
 
                 //openning connection
                 urlConnection = (HttpURLConnection) url.openConnection();
@@ -93,7 +142,7 @@ public class MainActivityFragment extends Fragment {
                 }
 
                 //if everything ok, return json
-                return buffer.toString();
+                String jsonResponse = buffer.toString();
 
             } catch (IOException e){
                 Log.e(LOG_TAG, "Error", e);
@@ -111,6 +160,7 @@ public class MainActivityFragment extends Fragment {
                         Log.e(LOG_TAG, "Error on close BufferedReader", e);
                     }
                 }
+                return null;
             }
         }
     }
