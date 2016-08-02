@@ -1,5 +1,6 @@
 package com.example.henio.sunshine.app;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -13,8 +14,10 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -85,6 +88,19 @@ public class ForecastFragment extends Fragment {
         // we should use rootView instead of getActivity, pois rootView is closer to the listview_forecast than getActivity. It's about performance!
         ListView listView = (ListView) rootView.findViewById(R.id.listview_forecast);
         listView.setAdapter(this.adapter);
+
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                String text = (String) adapterView.getAdapter().getItem(i);
+
+                Toast.makeText(getActivity(), text, Toast.LENGTH_SHORT).show();
+
+                //defining an explicit Intent calling DetailActivity
+                Intent openDetails = new Intent(getActivity(), DetailActivity.class).putExtra(Intent.EXTRA_TEXT, text);
+                startActivity(openDetails);
+            }
+        });
 
         return rootView;
     }
