@@ -1,9 +1,11 @@
 package com.example.henio.sunshine.app;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.text.format.Time;
@@ -62,7 +64,12 @@ public class ForecastFragment extends Fragment {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if(item.getItemId() == R.id.action_refresh){
-            new FetchWeatherTask().execute("Florianopolis");
+            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            String location = sharedPreferences.getString(getString(R.string.pref_location_key), getString(R.string.pref_location_default));
+
+            Log.i(LOG_TAG, "Location default = " + location);
+
+            new FetchWeatherTask().execute(location);
             return true;
         }
         return super.onOptionsItemSelected(item);
