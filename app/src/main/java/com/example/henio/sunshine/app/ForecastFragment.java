@@ -33,7 +33,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -47,6 +46,15 @@ public class ForecastFragment extends Fragment {
     public ForecastFragment() {
     }
 
+    public void updateWeather(){
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String location = sharedPreferences.getString(getString(R.string.pref_location_key), getString(R.string.pref_location_default));
+
+        Log.v(LOG_TAG, "Location default = " + location);
+
+        new FetchWeatherTask().execute(location);
+    }
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -57,6 +65,12 @@ public class ForecastFragment extends Fragment {
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+        this.updateWeather();
+    }
+
+    @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.forecastfragment, menu);
     }
@@ -64,12 +78,7 @@ public class ForecastFragment extends Fragment {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if(item.getItemId() == R.id.action_refresh){
-            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-            String location = sharedPreferences.getString(getString(R.string.pref_location_key), getString(R.string.pref_location_default));
-
-            Log.i(LOG_TAG, "Location default = " + location);
-
-            new FetchWeatherTask().execute(location);
+            this.updateWeather();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -80,16 +89,9 @@ public class ForecastFragment extends Fragment {
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
-        List<String> mock = new ArrayList<>();
-        mock.add("Today - Sunny - 88/63");
-        mock.add("Tomorrow - Foggy - 70/46");
-        mock.add("Weds - Cloudy - 72/63");
-        mock.add("Thurs - Rainy - 64/51");
-        mock.add("Fri - Foggy - 70/47");
-        mock.add("Sat - Sunny - 76/68");
-
         // adapter has four parameters: context, ID of list item layout, ID of text view to populate and list of data
-        this.adapter = new ArrayAdapter<String>(getActivity(), R.layout.list_item_forecast, R.id.list_item_forecast_textview, mock);
+        // pass an empty list because the real forecast information will be created on onStart method
+        this.adapter = new ArrayAdapter<String>(getActivity(), R.layout.list_item_forecast, R.id.list_item_forecast_textview, new ArrayList<String>());
 
         //ListView v = (ListView) getActivity().findViewById(R.id.listview_forecast);
         // we should use rootView instead of getActivity, pois rootView is closer to the listview_forecast than getActivity. It's about performance!
