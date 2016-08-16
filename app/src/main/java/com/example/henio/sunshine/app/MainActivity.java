@@ -1,13 +1,18 @@
 package com.example.henio.sunshine.app;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
 public class MainActivity extends AppCompatActivity {
+
+    private final String LOG_TAG = MainActivity.class.getSimpleName();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,6 +43,25 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
 
+        if(item.getItemId() == R.id.action_map){
+            this.showPreferredLocationInMap();
+            return true;
+        }
+
         return super.onOptionsItemSelected(item);
+    }
+
+    public void showPreferredLocationInMap(){
+        String location = PreferenceManager.getDefaultSharedPreferences(this).getString(getString(R.string.pref_location_key), getString(R.string.pref_location_default));
+        String geoStr = "geo:0,0?q=" + location;
+        Uri geoLocation = Uri.parse(geoStr);
+
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setData(geoLocation);
+        if(intent.resolveActivity(this.getPackageManager()) != null){
+            startActivity(intent);
+        } else {
+            Log.d(LOG_TAG, "Error in open map, no app installed.");
+        }
     }
 }

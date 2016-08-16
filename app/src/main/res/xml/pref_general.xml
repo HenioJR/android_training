@@ -11,12 +11,12 @@
         android:title="@string/pref_location_label" />
     <!--android:capitalize="words"-->
 
-        <ListPreference
-            android:defaultValue="@string/pref_unit_default"
-            android:entries="@array/prefs_units_options"
-            android:entryValues="@array/prefs_units_values"
-            android:key="@string/pref_unit_key"
-            android:title="@string/pref_unit_label" />
+    <ListPreference
+        android:defaultValue="@string/pref_unit_default"
+        android:entries="@array/prefs_units_options"
+        android:entryValues="@array/prefs_units_values"
+        android:key="@string/pref_unit_key"
+        android:title="@string/pref_unit_label" />
     <!--    android:negativeButtonText="@null"
             android:positiveButtonText="@null"
             -->
