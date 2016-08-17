@@ -1,8 +1,11 @@
 package com.example.henio.sunshine.app;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.text.format.Time;
@@ -13,8 +16,10 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -28,7 +33,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -42,6 +46,15 @@ public class ForecastFragment extends Fragment {
     public ForecastFragment() {
     }
 
+    public void updateWeather(){
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String location = sharedPreferences.getString(getString(R.string.pref_location_key), getString(R.string.pref_location_default));
+
+        Log.v(LOG_TAG, "Location default = " + location);
+
+        new FetchWeatherTask().execute(location);
+    }
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -52,6 +65,12 @@ public class ForecastFragment extends Fragment {
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+        this.updateWeather();
+    }
+
+    @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.forecastfragment, menu);
     }
@@ -59,7 +78,7 @@ public class ForecastFragment extends Fragment {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if(item.getItemId() == R.id.action_refresh){
-            new FetchWeatherTask().execute("Florianopolis");
+            this.updateWeather();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -70,21 +89,27 @@ public class ForecastFragment extends Fragment {
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
-        List<String> mock = new ArrayList<>();
-        mock.add("Today - Sunny - 88/63");
-        mock.add("Tomorrow - Foggy - 70/46");
-        mock.add("Weds - Cloudy - 72/63");
-        mock.add("Thurs - Rainy - 64/51");
-        mock.add("Fri - Foggy - 70/47");
-        mock.add("Sat - Sunny - 76/68");
-
         // adapter has four parameters: context, ID of list item layout, ID of text view to populate and list of data
-        this.adapter = new ArrayAdapter<String>(getActivity(), R.layout.list_item_forecast, R.id.list_item_forecast_textview, mock);
+        // pass an empty list because the real forecast information will be created on onStart method
+        this.adapter = new ArrayAdapter<String>(getActivity(), R.layout.list_item_forecast, R.id.list_item_forecast_textview, new ArrayList<String>());
 
         //ListView v = (ListView) getActivity().findViewById(R.id.listview_forecast);
         // we should use rootView instead of getActivity, pois rootView is closer to the listview_forecast than getActivity. It's about performance!
         ListView listView = (ListView) rootView.findViewById(R.id.listview_forecast);
         listView.setAdapter(this.adapter);
+
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                String text = (String) adapterView.getAdapter().getItem(i);
+
+                Toast.makeText(getActivity(), text, Toast.LENGTH_SHORT).show();
+
+                //defining an explicit Intent calling DetailActivity
+                Intent openDetails = new Intent(getActivity(), DetailActivity.class).putExtra(Intent.EXTRA_TEXT, text);
+                startActivity(openDetails);
+            }
+        });
 
         return rootView;
     }
@@ -204,12 +229,20 @@ public class ForecastFragment extends Fragment {
         /**
          * Prepare the weather high/lows for presentation.
          */
-        private String formatHighLows(double high, double low) {
+        private String formatHighLows(double high, double low, String unitType) {
+            if (unitType.equals(getString(R.string.pref_unit_key_imperial))) {
+                high = (high * 1.8) + 32;
+                low = (low * 1.8) + 32;
+            } else if (!unitType.equals(getString(R.string.pref_unit_key_metric))) {
+                Log.d(LOG_TAG, "Unit type not found: " + unitType);
+            }
+
+
             // For presentation, assume the user doesn't care about tenths of a degree.
             long roundedHigh = Math.round(high);
             long roundedLow = Math.round(low);
 
-            String highLowStr = roundedHigh + "/" + roundedLow;
+            String highLowStr = roundedLow + "/" + roundedHigh;
             return highLowStr;
         }
 
@@ -279,7 +312,10 @@ public class ForecastFragment extends Fragment {
                 double high = temperatureObject.getDouble(OWM_MAX);
                 double low = temperatureObject.getDouble(OWM_MIN);
 
-                highAndLow = formatHighLows(high, low);
+                SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+                String unitType = sharedPreferences.getString(getString(R.string.pref_unit_key), getString(R.string.pref_unit_default));
+
+                highAndLow = formatHighLows(high, low, unitType);
 
                 resultStrs[i] = day + " - " + description + " - " + highAndLow;
             }
