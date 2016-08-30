@@ -16,11 +16,41 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.i(LOG_TAG, "onCreate");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+    }
 
+    @Override
+    protected void onPause() {
+        Log.i(LOG_TAG, "onPause");
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        Log.i(LOG_TAG, "onResume");
+        super.onResume();
+    }
+
+    @Override
+    protected void onStop() {
+        Log.i(LOG_TAG, "onStop");
+        super.onStop();
+    }
+
+    @Override
+    protected void onStart() {
+        Log.i(LOG_TAG, "onStart");
+        super.onStart();
+    }
+
+    @Override
+    protected void onDestroy() {
+        Log.i(LOG_TAG, "onDestroy");
+        super.onDestroy();
     }
 
     @Override
